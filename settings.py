@@ -1,49 +1,29 @@
 import os
-import environ
-import oscar
-
-env = environ.Env()
 
 # Path helper
 location = lambda x: os.path.join(
     os.path.dirname(os.path.realpath(__file__)), x)
 
-DEBUG = env.bool('DEBUG', default=True)
+DEBUG = False
 
-ALLOWED_HOSTS = [
-    'latest.oscarcommerce.com',
-    'master.oscarcommerce.com',
-    'localhost',
-    '127.0.0.1',
-]
-
-# This is needed for the hosted version of the sandbox
-ADMINS = (
-    ('David Winterbottom', 'david.winterbottom@gmail.com'),
-    ('Michael van Tellingen', 'michaelvantellingen@gmail.com'),
-)
 EMAIL_SUBJECT_PREFIX = '[Oscar sandbox] '
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-MANAGERS = ADMINS
 
 # Use a Sqlite database by default
 DATABASES = {
     'default': {
-        'ENGINE': os.environ.get('DATABASE_ENGINE', 'django.db.backends.sqlite3'),
-        'NAME': os.environ.get('DATABASE_NAME', location('db.sqlite')),
-        'USER': os.environ.get('DATABASE_USER', None),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD', None),
-        'HOST': os.environ.get('DATABASE_HOST', None),
-        'PORT': os.environ.get('DATABASE_PORT', None),
-        'ATOMIC_REQUESTS': True
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'sandbox',
+        'USER': 'postgres',
+        'PASSWORD': 'JXqAa52rtokVt4cS',
+        'HOST': 'oa.huixdou.com',
+        'PORT': '',
     }
 }
 
 CACHES = {
-    'default': env.cache(default='locmemcache://'),
+    'default': 'sandbox_redis://',
 }
-
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -53,7 +33,7 @@ CACHES = {
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
 USE_TZ = True
-TIME_ZONE = 'Europe/London'
+TIME_ZONE = 'Asia/Shanghai'
 
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
@@ -119,14 +99,13 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '$)a7n&o80u!6y5t-+jrd3)3!%vh&shg$wqpjpxc!ar&p#!)n1a'
+SECRET_KEY = 'X1rSdlgXaBOXLSRRLvstrofVQ1c6pL'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             location('templates'),
-            oscar.OSCAR_MAIN_TEMPLATE_DIR,
         ],
         'OPTIONS': {
             'loaders': [
@@ -145,7 +124,6 @@ TEMPLATES = [
                 # Oscar specific
                 'oscar.apps.search.context_processors.search_form',
                 'oscar.apps.customer.notifications.context_processors.notifications',
-                'oscar.apps.promotions.context_processors.promotions',
                 'oscar.apps.checkout.context_processors.checkout',
                 'oscar.core.context_processors.metadata',
             ],
@@ -162,6 +140,7 @@ MIDDLEWARE = [
 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
@@ -176,7 +155,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'urls'
-
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -259,24 +237,64 @@ LOGGING = {
     }
 }
 
-
 INSTALLED_APPS = [
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.sites',
     'django.contrib.messages',
-    'django.contrib.admin',
-    'django.contrib.flatpages',
     'django.contrib.staticfiles',
-    'django.contrib.sitemaps',
-    'django_extensions',
+    'django.contrib.sites',
+    'django.contrib.flatpages',
 
-    # Debug toolbar + extensions
-    'debug_toolbar',
-    'apps.gateway',     # For allowing dashboard access
+    'oscar',
+    'oscar.apps.analytics',
+    'oscar.apps.checkout',
+    'oscar.apps.address',
+    'oscar.apps.shipping',
+    'oscar.apps.catalogue',
+    'oscar.apps.catalogue.reviews',
+    'oscar.apps.partner',
+    'oscar.apps.basket',
+    'oscar.apps.payment',
+    'oscar.apps.offer',
+    'oscar.apps.order',
+    'oscar.apps.customer',
+    'oscar.apps.search',
+    'oscar.apps.voucher',
+    'oscar.apps.wishlists',
+    'oscar.apps.dashboard',
+    'oscar.apps.dashboard.reports',
+    'oscar.apps.dashboard.users',
+    'oscar.apps.dashboard.orders',
+    'oscar.apps.dashboard.catalogue',
+    'oscar.apps.dashboard.offers',
+    'oscar.apps.dashboard.partners',
+    'oscar.apps.dashboard.pages',
+    'oscar.apps.dashboard.ranges',
+    'oscar.apps.dashboard.reviews',
+    'oscar.apps.dashboard.vouchers',
+    'oscar.apps.dashboard.communications',
+    'oscar.apps.dashboard.shipping',
+
+    # 3rd-party apps that Oscar depends on
     'widget_tweaks',
-] + oscar.get_core_apps()
+    'haystack',
+    'treebeard',
+    'sorl.thumbnail',
+    'easy_thumbnails',
+    'django_tables2',
+
+    # Django apps that the sandbox depends on
+    'django.contrib.sitemaps',
+
+    # 3rd-party apps that the sandbox depends on
+    'django_extensions',
+    'debug_toolbar',
+
+    # For allowing dashboard access
+    'apps.gateway',
+]
 
 # Add Oscar's custom auth backend so users can sign in using their email
 # address.
@@ -305,6 +323,7 @@ APPEND_SLASH = True
 # ====================
 
 from django.contrib.messages import constants as messages
+
 MESSAGE_TAGS = {
     messages.ERROR: 'danger'
 }
@@ -317,13 +336,13 @@ HAYSTACK_CONNECTIONS = {
     },
 }
 # Here's a sample Haystack config if using Solr (which is recommended)
-#HAYSTACK_CONNECTIONS = {
+# HAYSTACK_CONNECTIONS = {
 #    'default': {
 #        'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
 #        'URL': 'http://127.0.0.1:8983/solr/oscar_latest/',
 #        'INCLUDE_SPELLING': True
 #    },
-#}
+# }
 
 # =============
 # Debug Toolbar
@@ -335,7 +354,6 @@ INTERNAL_IPS = ['127.0.0.1', '::1']
 # Oscar settings
 # ==============
 
-from oscar.defaults import *
 
 # Meta
 # ====
@@ -344,7 +362,6 @@ OSCAR_SHOP_TAGLINE = 'Sandbox'
 
 OSCAR_RECENTLY_VIEWED_PRODUCTS = 20
 OSCAR_ALLOW_ANON_CHECKOUT = True
-
 
 # Order processing
 # ================
@@ -379,36 +396,25 @@ OSCAR_ORDER_STATUS_CASCADE = {
 # on-the-fly less processor.
 OSCAR_USE_LESS = False
 
-
-# Sentry
-# ======
-
-if env('SENTRY_DSN', default=None):
-    RAVEN_CONFIG = {'dsn': env('SENTRY_DSN', default=None)}
-    LOGGING['handlers']['sentry'] = {
-        'level': 'ERROR',
-        'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
-    }
-    LOGGING['root']['handlers'].append('sentry')
-    INSTALLED_APPS.append('raven.contrib.django.raven_compat')
-
-
 # Sorl
 # ====
 
 THUMBNAIL_DEBUG = DEBUG
 THUMBNAIL_KEY_PREFIX = 'oscar-sandbox'
-THUMBNAIL_KVSTORE = env(
-    'THUMBNAIL_KVSTORE',
-    default='sorl.thumbnail.kvstores.cached_db_kvstore.KVStore')
-THUMBNAIL_REDIS_URL = env('THUMBNAIL_REDIS_URL', default=None)
-
+THUMBNAIL_KVSTORE = 'sorl.thumbnail.kvstores.cached_db_kvstore.KVStore'
+THUMBNAIL_REDIS_URL = None
 
 # Django 1.6 has switched to JSON serializing for security reasons, but it does not
 # serialize Models. We should resolve this by extending the
 # django/core/serializers/json.Serializer to have the `dumps` function. Also
 # in tests/config.py
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
+
+# Security
+SECURE_SSL_REDIRECT = False
+SECURE_HSTS_SECONDS = 0
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
 
 # Try and import local settings which can be used to override any of the above.
 try:
